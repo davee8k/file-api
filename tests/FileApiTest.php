@@ -53,7 +53,7 @@ class FileApiTest extends \PHPUnit\Framework\TestCase {
 Disallow:
 Sitemap: /sitemap.xml', $api->getUrlData('http://localhost/0_BaseAdmin/robots.txt'));
 
-		$this->assertFalse($api->getUrlData('http://localhost/failtoload'));
+		$this->assertNull($api->getUrlData('http://localhost/failtoload'));
 		$this->assertEquals($api->getError(), 'Curl error: 404');
 	}
 
@@ -251,11 +251,11 @@ Sitemap: /sitemap.xml', $api->getUrlData('http://localhost/0_BaseAdmin/robots.tx
 			'error' => 0
 		];
 
-		$api->fakeUpload('fake', null, $expect['tmp_name'], $expect['name']);
+		$api->fakeUpload('fake', $expect['tmp_name'], $expect['name']);
 
 		$this->assertEquals($_FILES['fake'], $expect);
 
-		$api->fakeUpload('fake2', 1, $expect['tmp_name'], $expect['name']);
+		$api->fakeUpload('fake2', $expect['tmp_name'], $expect['name'], 1);
 
 		$this->assertEquals($_FILES['fake2']['name'][1], $expect['name']);
 		$this->assertEquals($_FILES['fake2']['tmp_name'][1], $expect['tmp_name']);

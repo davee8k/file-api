@@ -5,6 +5,7 @@ namespace FileApi;
  * File interaction throught PHP
  */
 class FileApiPhp extends FileApi {
+	/** @var int */
 	static $mode = 0777;	// for directories
 
 	/**
@@ -12,7 +13,7 @@ class FileApiPhp extends FileApi {
 	 * @param string $url
 	 * @return bool
 	 */
-	public function isWritable ($url) {
+	public function isWritable (string $url): bool {
 		return is_writable($this->makePath($url, false));
 	}
 
@@ -23,7 +24,7 @@ class FileApiPhp extends FileApi {
 	 * @param string $newFile
 	 * @return bool
 	 */
-	public function rename ($dir, $oldFile, $newFile) {
+	public function rename (string $dir, string $oldFile, string $newFile): bool {
 		if (!$newFile) {
 			$this->error = $this->getMsg('NO_NAME');
 		}
@@ -45,8 +46,8 @@ class FileApiPhp extends FileApi {
 	 * @param string|null $fileNew
 	 * @return bool
 	 */
-	public function copy ($dirOld, $dirNew, $fileOld = null, $fileNew = null) {
-		return $this->processAction($dirOld, $dirNew, $fileOld, $fileNew ? $fileNew : $fileOld, true);
+	public function copy (string $dirOld, string $dirNew, string $fileOld = null, string $fileNew = null): bool {
+		return $this->processAction($dirOld, $dirNew, $fileOld, $fileNew ?: $fileOld, true);
 	}
 
 	/**
@@ -57,8 +58,8 @@ class FileApiPhp extends FileApi {
 	 * @param string|null $fileNew
 	 * @return bool
 	 */
-	public function move ($dirOld, $dirNew, $fileOld = null, $fileNew = null) {
-		return $this->processAction($dirOld, $dirNew, $fileOld, $fileNew ? $fileNew : $fileOld, false);
+	public function move (string $dirOld, string $dirNew, string $fileOld = null, string $fileNew = null): bool {
+		return $this->processAction($dirOld, $dirNew, $fileOld, $fileNew ?: $fileOld, false);
 	}
 
 	/**
@@ -67,11 +68,16 @@ class FileApiPhp extends FileApi {
 	 * @param string|null $file
 	 * @return bool
 	 */
-	public function delete ($dir, $file = null) {
-		$this->error = $this->getMsg('NOT_FOUND', self::escape($file ? $file : $dir), $file ? 'FILE' : 'DIR');
+	public function delete (string $dir, string $file = null): bool {
+		$this->error = $this->getMsg('NOT_FOUND', self::escape($file ?: $dir), $file ? 'FILE' : 'DIR');
 		if ($this->exist($dir, $file)) {
 			if ($file === null) {
 				$dh = opendir($this->makePath($dir));
+				if ($dh === false) {
+					$this->error = $this->getMsg('GENERAL_ERROR', self::escape($dir), 'DIR');
+					return false;
+				}
+
 				while ($cont = readdir($dh)) {
 					if ($cont != '.' && $cont != '..') {
 						closedir($dh);
@@ -83,8 +89,10 @@ class FileApiPhp extends FileApi {
 				if ($this->dirDelete($dir)) return true;
 				$this->error = $this->getMsg('NOT_DELETE', self::escape($dir), 'DIR');
 			}
-			else if ($this->fileDelete($dir, $file)) return true;
-			$this->error = $this->getMsg('NOT_DELETE', self::escape($file), 'FILE');
+			else {
+				if ($this->fileDelete($dir, $file)) return true;
+				$this->error = $this->getMsg('NOT_DELETE', self::escape($file), 'FILE');
+			}
 		}
 		return false;
 	}
@@ -92,20 +100,24 @@ class FileApiPhp extends FileApi {
 	/**
 	 * File upload. Error message is from isUpload
 	 * @param string $input
-	 * @param integer $id
+	 * @param int|null $id
 	 * @param string $dir
 	 * @param string|null $file
 	 * @param bool $copy
 	 * @return bool
 	 */
-	public function upload ($input, $id, $dir, $file = null, $copy = false) {
+	public function upload (string $input, ?int $id, string $dir, string $file = null, bool $copy = false): bool {
 		if ($this->isUpload($input, $id)) {
 			if ($file === null) $file = $this->getUpload($input, 'name', $id);
 			if (!$this->isWritable($dir)) $this->error = $this->getMsg('NO_RIGHTS', self::escape($this->path.$dir));
 			else {
 				$tmpName = $this->getUpload($input, 'tmp_name', $id);
-				if ($copy && $this->fileCopy(false, $dir, $tmpName, $file)) return true;
-				if (!$copy && move_uploaded_file($tmpName, $this->makePath($dir).$file)) return true;
+				if ($copy) {
+					if ($this->fileCopy(null, $dir, $tmpName, $file)) return true;
+				}
+				else {
+					if (move_uploaded_file($tmpName, $this->makePath($dir).$file)) return true;
+				}
 				$this->error = $this->getMsg('GENERAL_ERROR', self::escape($tmpName.', '.$dir.$file));
 			}
 		}
@@ -117,7 +129,7 @@ class FileApiPhp extends FileApi {
 	 * @param string $dir
 	 * @return bool
 	 */
-	public function createDir ($dir) {
+	public function createDir (string $dir): bool {
 		$path = $this->cropPath($dir);
 		if (!is_dir($this->makePath($path))) {
 			$way = "";
@@ -166,30 +178,30 @@ class FileApiPhp extends FileApi {
 	 * Process action form Copy and Move
 	 * @param string $dirOld
 	 * @param string $dirNew
-	 * @param string $fileOld
-	 * @param string $fileNew
+	 * @param string|null $fileOld
+	 * @param string|null $fileNew
 	 * @param bool $copy
 	 * @return bool
 	 */
-	protected function processAction ($dirOld, $dirNew, $fileOld, $fileNew, $copy = false) {
+	protected function processAction (string $dirOld, string $dirNew, ?string $fileOld,  ?string $fileNew, bool $copy = false): bool {
 		if ($this->exist($dirOld, $fileOld)) {
 			if (!$this->exist($dirNew, $fileNew)) {
 				if (!$this->createDir($dirNew)) return false;
 				if ($copy) {
-					if (!$fileNew) return true;
+					if ($fileOld === null || $fileNew === null) return true;
 					if ($this->fileCopy($dirOld, $dirNew, $fileOld, $fileNew)) return true;
-					$this->error = $this->getMsg('NO_COPY', self::escape($fileOld ? $fileOld : $dirOld), $fileOld ? 'FILE' : 'DIR');
+					$this->error = $this->getMsg('NOT_COPY', self::escape($fileOld ?: $dirOld), $fileOld ? 'FILE' : 'DIR');
 				}
 				else {
 					if ($this->uniRename($dirOld, $dirNew, $fileOld, $fileNew)) return true;
-					$this->error = $this->getMsg('NO_MOVE', self::escape($fileOld ? $fileOld : $dirOld), $fileOld ? 'FILE' : 'DIR');
+					$this->error = $this->getMsg('NOT_MOVE', self::escape($fileOld ?: $dirOld), $fileOld ? 'FILE' : 'DIR');
 				}
 				return false;
 			}
-			$this->error = $this->getMsg('EXIST', self::escape($fileNew ? $fileNew : $dirNew), $fileNew ? 'FILE' : 'DIR');
+			$this->error = $this->getMsg('EXIST', self::escape($fileNew ?: $dirNew), $fileNew ? 'FILE' : 'DIR');
 			return false;
 		}
-		$this->error = $this->getMsg('NOT_FOUND', self::escape($fileOld ? $fileOld : $dirOld), $fileOld ? 'FILE' : 'DIR');
+		$this->error = $this->getMsg('NOT_FOUND', self::escape($fileOld ?: $dirOld), $fileOld ? 'FILE' : 'DIR');
 		return false;
 	}
 
@@ -198,7 +210,7 @@ class FileApiPhp extends FileApi {
 	 * @param string $dir
 	 * @return bool
 	 */
-	protected function dirMake ($dir) {
+	protected function dirMake (string $dir): bool {
 		return @mkdir($this->makePath($dir), self::$mode);
 	}
 
@@ -207,28 +219,29 @@ class FileApiPhp extends FileApi {
 	 * @param string $dir
 	 * @return bool
 	 */
-	protected function dirDelete ($dir) {
+	protected function dirDelete (string $dir): bool {
 		return @rmdir($this->makePath($dir));
 	}
 
 	/**
 	 * DirOld for TMP file
-	 * @param mixed $dirOld
+	 * @param string|null $dirOld
 	 * @param string $dirNew
 	 * @param string $fileOld
 	 * @param string $fileNew
 	 * @return bool
 	 */
-	protected function fileCopy ($dirOld, $dirNew, $fileOld, $fileNew) {
-		return @copy($dirOld === false ? $fileOld : $this->makePath($dirOld).$fileOld, $this->makePath($dirNew).$fileNew);
+	protected function fileCopy (?string $dirOld, string  $dirNew, string $fileOld, string $fileNew): bool {
+		return @copy($dirOld === null ? $fileOld : $this->makePath($dirOld).$fileOld, $this->makePath($dirNew).$fileNew);
 	}
 
 	/**
 	 * Delete file
+     * @param string $dir
 	 * @param string $file
 	 * @return bool
 	 */
-	protected function fileDelete ($dir, $file) {
+	protected function fileDelete (string $dir, string $file): bool {
 		return @unlink($this->makePath($dir).$file);
 	}
 
@@ -236,11 +249,11 @@ class FileApiPhp extends FileApi {
 	 * Rename file or directory
 	 * @param string $dirOld
 	 * @param string $dirNew
-	 * @param string $fileOld
-	 * @param string $fileNew
+	 * @param string|null $fileOld
+	 * @param string|null $fileNew
 	 * @return bool
 	 */
-	protected function uniRename ($dirOld, $dirNew, $fileOld, $fileNew) {
+	protected function uniRename (string $dirOld, string $dirNew, ?string $fileOld, ?string $fileNew): bool {
 		return @rename($this->makePath($dirOld).$fileOld, $this->makePath($dirNew).$fileNew);
 	}
 }

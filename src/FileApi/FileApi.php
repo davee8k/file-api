@@ -5,17 +5,20 @@ use InvalidArgumentException,
 	finfo;
 
 /**
- * File APIs for browsering and interaction with files
+ * File APIs for browsing and interaction with files
  *
  * @author DaVee8k
  * @license https://unlicense.org/
- * @version 0.86.1
+ * @version 0.87
  */
 class FileApi {
+	/** @var string */
 	protected $location;
+	/** @var string */
 	protected $path = '';
+	/** @var string */
 	protected $error = '';
-
+	/** @var array<string, string> */
 	public static $msgs = [
 		'FILE' => 'File',
 		'DIR' => 'Directory',
@@ -42,7 +45,7 @@ class FileApi {
 	 * @param string $quote
 	 * @return string
 	 */
-	public static function escape ($value, $quote = "'") {
+	public static function escape (string $value, string $quote = "'"): string {
 		return htmlspecialchars($quote.$value.$quote, ENT_QUOTES);
 	}
 
@@ -50,7 +53,7 @@ class FileApi {
 	 * @param string $loc
 	 * @throws InvalidArgumentException
 	 */
-	public function __construct ($loc) {
+	public function __construct (string $loc) {
 		$this->location = $loc;
 		$this->path = $loc;
 		if (!$this->setPath('')) throw new InvalidArgumentException($this->getMsg('NOT_FOUND', self::escape($loc), 'DIR'));
@@ -61,15 +64,15 @@ class FileApi {
 	 * @param string $dir
 	 * @return string
 	 */
-	public function filterPath ($dir) {
-		return preg_replace('/(^|\/){1}\.\.\//', '/', $dir);
+	public function filterPath (string $dir): string {
+		return preg_replace('/(^|\/){1}\.\.\//', '/', $dir) ?? '';
 	}
 
 	/**
 	 * Return last error message
 	 * @return string
 	 */
-	public function getError () {
+	public function getError (): string {
 		return $this->error;
 	}
 
@@ -77,7 +80,7 @@ class FileApi {
 	 * Return current path
 	 * @return string
 	 */
-	public function getPath () {
+	public function getPath (): string {
 		return $this->path;
 	}
 
@@ -86,8 +89,8 @@ class FileApi {
 	 * @param string $dir
 	 * @return string
 	 */
-	public function cropPath ($dir) {
-		return preg_replace('/^'.preg_quote($this->path, '/').'/', '', $dir);
+	public function cropPath (string $dir): string {
+		return preg_replace('/^'.preg_quote($this->path, '/').'/', '', $dir) ?? '';
 	}
 
 	/**
@@ -96,7 +99,7 @@ class FileApi {
 	 * @param bool $isDir
 	 * @return string
 	 */
-	public function fixPath ($dir, $isDir = true) {
+	public function fixPath (string $dir, bool $isDir = true): string {
 		if ($dir !== '') {
 			if (strpos($dir, './') === 0) $dir = substr($dir, 2);
 			if ($isDir && substr($dir, -1) !== DIRECTORY_SEPARATOR) $dir .= DIRECTORY_SEPARATOR;
@@ -110,7 +113,7 @@ class FileApi {
 	 * @param bool $isDir
 	 * @return string
 	 */
-	public function makePath ($dir, $isDir = true) {
+	public function makePath (string $dir, bool $isDir = true): string {
 		$dir = $this->fixPath($dir, $isDir);
 		if ($dir === '') return $this->path;
 		if (strpos($dir, $this->path) === 0) return $dir;
@@ -122,7 +125,7 @@ class FileApi {
 	 * @param string $dir
 	 * @return bool
 	 */
-	public function setPath ($dir) {
+	public function setPath (string $dir): bool {
 		$currentPath = $this->path;
 		$this->path = $this->location;
 
@@ -142,7 +145,7 @@ class FileApi {
 	 * @param int|null $id
 	 * @return mixed
 	 */
-	public function getUpload ($input, $type, $id = null) {
+	public function getUpload (string $input, string $type, int $id = null) {
 		if ($id === null) return $_FILES[$input][$type];
 		return $_FILES[$input][$type][$id];
 	}
@@ -154,7 +157,7 @@ class FileApi {
 	 * @param mixed $val
 	 * @param int|null $id
 	 */
-	public function setUpload ($input, $type, $val, $id = null) {
+	public function setUpload (string $input, string $type, $val, int $id = null): void {
 		if (!isset($_FILES[$input])) $_FILES[$input] = [];
 		if ($id === null) $_FILES[$input][$type] = $val;
 		else {
@@ -168,7 +171,7 @@ class FileApi {
 	 * @param string $url
 	 * @return string
 	 */
-	public function getMime ($url) {
+	public function getMime (string $url): string {
 		if (class_exists('finfo')) {
 			$info = new finfo(FILEINFO_MIME_TYPE);
 			return $info->file($this->makePath($url, false));
@@ -182,7 +185,7 @@ class FileApi {
 	 * @param string $url
 	 * @return int
 	 */
-	public function getSize ($url) {
+	public function getSize (string $url): int {
 		return filesize($this->makePath($url, false));
 	}
 
@@ -193,7 +196,7 @@ class FileApi {
 	 * @param bool $caseSensitive
 	 * @return bool
 	 */
-	public function exist ($dir, $file = null, $caseSensitive = false) {
+	public function exist (string $dir, string $file = null, bool $caseSensitive = false): bool {
 		if ($caseSensitive) {
 			if ($this->exist($dir, $file, false)) {
 				return true;
@@ -234,14 +237,14 @@ class FileApi {
 	/**
 	 * Get list of files in directory
 	 * @param string $dir
-	 * @return array
+	 * @return array<string, array<string, string|int>>
 	 */
-	public function loadFiles ($dir = '') {
+	public function loadFiles (string $dir = ''): array {
 		$files = [];
 		$path = $this->makePath($dir);
 		$dh = opendir($path);
 		if ($dh) {
-			while (false !== ($name = readdir($dh))) {
+			while (($name = readdir($dh)) !== false) {
 				if (!in_array($name, ['.','..'])) {
 					if (!is_dir($path.$name)) {
 						$files[$name] = ['NAME'=>$name, 'DATE'=>filectime($path.$name),
@@ -261,7 +264,7 @@ class FileApi {
 	 * @param bool $emptyIsOk
 	 * @return bool
 	 */
-	public function isUpload ($input, $id = null, $emptyIsOk = false) {
+	public function isUpload (string $input, ?int $id = null, bool $emptyIsOk = false): bool {
 		$errNum = $this->getUpload($input, 'error', $id);
 		if ($errNum === 0) return true;
 
@@ -281,12 +284,12 @@ class FileApi {
 	/**
 	 * Setup $_FILE input
 	 * @param string $input
-	 * @param int|null $id
 	 * @param string $filePath
 	 * @param string $name
+	 * @param int|null $id
 	 * @throws InvalidArgumentException
 	 */
-	public function fakeUpload ($input, $id, $filePath, $name) {
+	public function fakeUpload (string $input, string $filePath, string $name, int $id = null): void {
 		if ($id === null ? isset($_FILES[$input]['name']) : isset($_FILES[$input]['name'][$id])) {
 			throw new InvalidArgumentException('File input already exists.');
 		}
@@ -300,12 +303,12 @@ class FileApi {
 	/**
 	 * Copy file to specific array space
 	 * @param string $fromMark
-	 * @param array|int|null $fromLevels
+	 * @param array<int,mixed>|int|null $fromLevels
 	 * @param string $toMark
-	 * @param array|int|null $toLevels
+	 * @param array<int,mixed>|int|null $toLevels
 	 * @return bool
 	 */
-	public function clonePost ($fromMark, $fromLevels, $toMark, $toLevels) {
+	public function clonePost (string $fromMark, $fromLevels, string $toMark, $toLevels): bool {
 		foreach ($_FILES[$fromMark] as $mark=>$none) {
 			$from = $_FILES[$fromMark][$mark];
 			if ($fromLevels !== null) {
@@ -331,9 +334,9 @@ class FileApi {
 	/**
 	 * Get file with CURL
 	 * @param string $url
-	 * @return mixed
+	 * @return string|null
 	 */
-	public function getUrlData ($url) {
+	public function getUrlData (string $url): ?string {
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_HEADER, 0); // vypne hlavicku
 		curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (X11; U; Linux x86_64; en-US; rv:1.9.1)');
@@ -341,13 +344,13 @@ class FileApi {
 		curl_setopt($ch, CURLOPT_URL, $url);
 		$data = curl_exec($ch);
 		// check return content
-		$returnCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		$returnCode = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
 		curl_close($ch);
-		if (preg_match('/(^40)|(^50)/', $returnCode)) {
+		if ($returnCode >= 300) {
 			$this->error = $this->getMsg('CURL_ERROR', $returnCode);
-			return false;
+			return null;
 		}
-		return $data;
+		return $data === false ? null : $data;
 	}
 
 	/**
@@ -357,7 +360,7 @@ class FileApi {
 	 * @param bool $stream
 	 * @return bool
 	 */
-	public function downloadFile ($dir, $file, $stream = false) {
+	public function downloadFile (string $dir, string $file, bool $stream = false): bool {
 		if (!$this->exist($dir, $file)) return false;
 
 		$range = false;
@@ -376,60 +379,62 @@ class FileApi {
 		}
 
 		// try to turn off compression
-		@apache_setenv('no-gzip', 1);
+		@apache_setenv('no-gzip', '1');
 		@ini_set('zlib.output_compression', 'Off');
 
 		// open file
 		$fileSize = filesize($this->makePath($dir).$file);
 		$fp = @fopen($this->makePath($dir).$file, 'rb');
+		if ($fp !== false) {
+			// setup headers
+			header('Pragma: public');
+			header('Expires: -1');
+			header('Cache-Control: public, must-revalidate, post-check=0, pre-check=0');
+			header('Content-Type: application/octet-stream');
+			header('Content-Disposition: attachment; filename="'.$file.'"');
+			if ($stream) header('Content-Disposition: inline;');
+			// allow partial downloads
+			header('Accept-Ranges: bytes');
 
-		// setup headers
-		header('Pragma: public');
-		header('Expires: -1');
-		header('Cache-Control: public, must-revalidate, post-check=0, pre-check=0');
-		header('Content-Type: application/octet-stream');
-		header('Content-Disposition: attachment; filename="'.$file.'"');
-		if ($stream) header('Content-Disposition: inline;');
-		// allow partial downloads
-		header('Accept-Ranges: bytes');
+			// figure out download piece from range (if set)
+			$seekStart = 0;
+			$seekEnd = $fileSize - 1;
+			if (isset($range[1])) $seekEnd = min(abs(intval($range[1])), $seekEnd);
+			if ($range && $seekEnd > abs(intval($range[0]))) $seekStart = max(abs(intval($range[0])), 0);
 
-		// figure out download piece from range (if set)
-		$seekStart = 0;
-		$seekEnd = $fileSize - 1;
-		if (isset($range[1])) $seekEnd = min(abs(intval($range[1])), $seekEnd);
-		if ($range && $seekEnd > abs(intval($range[0]))) $seekStart = max(abs(intval($range[0])), 0);
-
-		// send only partial content header if downloading a piece of the file (IE workaround)
-		if ($seekStart > 0 || $seekEnd < ($fileSize - 1)) {
-			header('HTTP/1.1 206 Partial Content');
-			header('Content-Range: bytes '.$seekStart.'-'.$seekEnd.'/'.$fileSize);
-			header('Content-Length: '.($seekEnd - $seekStart + 1));
-		}
-		else header('Content-Length: '.$fileSize);
-
-		// download file
-		fseek($fp, $seekStart);
-		while (!feof($fp)) {
-			echo @fread($fp, 1024 * 8);
-			// client disconnected
-			if (connection_status() !== 0) {
-				@fclose($fp);
-				exit;
+			// send only partial content header if downloading a piece of the file (IE workaround)
+			if ($seekStart > 0 || $seekEnd < ($fileSize - 1)) {
+				header('HTTP/1.1 206 Partial Content');
+				header('Content-Range: bytes '.$seekStart.'-'.$seekEnd.'/'.$fileSize);
+				header('Content-Length: '.($seekEnd - $seekStart + 1));
 			}
+			else header('Content-Length: '.$fileSize);
+
+			// download file
+			fseek($fp, $seekStart);
+			while (!feof($fp)) {
+				echo @fread($fp, 1024 * 8);
+				// client disconnected
+				if (connection_status() !== 0) {
+					@fclose($fp);
+					exit;
+				}
+			}
+			@fclose($fp);
+			return true;
 		}
-		@fclose($fp);
-		return true;
+		return false;
 	}
 
 	/**
 	 * Get message text
 	 * @param string $msg
 	 * @param string|int|null $param
-	 * @param string $type
+	 * @param string|null $type
 	 * @param int|null $num
 	 * @return string
 	 */
-	protected function getMsg ($msg, $param = null, $type = null, $num = null) {
+	protected function getMsg (string $msg, $param = null, string $type = null, int $num = null): string {
 		if (isset(static::$msgs[$msg])) {
 			return ($type ? static::$msgs[$type] : '').sprintf(static::$msgs[$msg], $param, $num);
 		}

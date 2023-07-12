@@ -4,15 +4,15 @@ namespace FileApi;
 /**
  * Support class for filename extension and unit conversion
  */
-class FileExt {
+class Utils {
 
 	/**
 	 * Get maximum upload size
 	 * @param int $custom
 	 * @return int
 	 */
-	public static function getMaxUpload ($custom = 0) {
-		$max = min(self::sizeToNum(ini_get('upload_max_filesize')), self::sizeToNum(ini_get('post_max_size')));
+	public static function getMaxUpload (int $custom = 0): int {
+		$max = min(self::sizeToNum(ini_get('upload_max_filesize') ?: '9P'), self::sizeToNum(ini_get('post_max_size') ?: '9P'));
 		return $custom !== 0 && $max > $custom ? $custom : $max;
 	}
 
@@ -21,9 +21,11 @@ class FileExt {
 	 * @param string $val
 	 * @return int
 	 */
-	public static function sizeToNum ($val) {
+	public static function sizeToNum (string $val): int {
 		$val = preg_split('/(?<=\d) *(?=[a-z])/i', $val);
-		$num = $val[0];
+		if ($val === false) throw new InvalidArgumentException('Invalid file size value');
+
+		$num = (int)$val[0];
 		if ($val[1]) {
 			switch (strtoupper(substr($val[1], 0, 1))) {
 				case 'P': $num *= 1024;
@@ -40,9 +42,9 @@ class FileExt {
 	 * Convert numeric value to KB
 	 * @param int $num
 	 * @param bool $split
-	 * @return array|string
+	 * @return array{float,string}|string
 	 */
-	public static function numToSize ($num, $split = false) {
+	public static function numToSize (int $num, bool $split = false) {
 		$scale = ['','K','M','G','T','P'];
 		$n = 0;
 		while ($num >= 1024 && $num = round($num / 1024)) $n++;
@@ -56,7 +58,7 @@ class FileExt {
 	 * @param string $name
 	 * @return string
 	 */
-	public static function getExt ($name) {
+	public static function getExt (string $name): string {
 		$dot = mb_strrpos($name, '.');
 		if ($dot) return mb_strtolower(mb_substr($name, $dot + 1));
 		return '';
@@ -67,9 +69,11 @@ class FileExt {
 	 * @param string $ext
 	 * @return string
 	 */
-	public static function getIcon ($ext) {
-		switch ($ext) {
+	public static function getIcon (string $ext): string {
+		switch (strtolower($ext)) {
 			case 'pdf': return 'fa-file-pdf';
+			case 'xml':
+			case 'html':
 			case 'txt': return 'fa-file-text';
 			case 'svg':
 			case 'gif':

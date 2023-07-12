@@ -1,0 +1,61 @@
+<?php
+use FileApi\Utils;
+
+class UtilsTest extends \PHPUnit\Framework\TestCase {
+
+	public function test_basic_getMaxUpload () {
+		$this->assertEquals(100, Utils::getMaxUpload(100));
+	}
+
+	public function test_sizeToNum () {
+		$this->assertEquals(1024, Utils::sizeToNum('1KB'));
+
+		$this->assertEquals(10485760, Utils::sizeToNum('10MB'));
+
+		$this->assertEquals(107374182400, Utils::sizeToNum('100GB'));
+
+		$this->assertEquals(1099511627776, Utils::sizeToNum('1 T'));
+	}
+
+	public function test_numToSize () {
+		$this->assertEquals('1 KB', Utils::numToSize(1024));
+
+		$this->assertEquals('10 MB', Utils::numToSize(10485760));
+
+		$this->assertEquals('100 GB', Utils::numToSize(107374182400));
+
+		$this->assertEquals([1, 'T'], Utils::numToSize(1099511627776, true));
+	}
+
+	public function test_getExt () {
+		$this->assertEquals('test', Utils::getExt('test.test'));
+
+		$this->assertEquals('gif', Utils::getExt('test.dot.gif'));
+
+		$this->assertEquals('', Utils::getExt('test'));
+	}
+
+	public function test_getIcon () {
+		foreach (['gif','jpg','bmp','gif'] as $ext) {
+			$this->assertEquals('fa-file-image', Utils::getIcon($ext));
+		}
+		foreach (['doc','docx','odt'] as $ext) {
+			$this->assertEquals('fa-file-word', Utils::getIcon($ext));
+		}
+		foreach (['7z','rar','tar','zip'] as $ext) {
+			$this->assertEquals('fa-file-zipper', Utils::getIcon($ext));
+		}
+		foreach (['aac','mp3','wav'] as $ext) {
+			$this->assertEquals('fa-file-audio', Utils::getIcon($ext));
+		}
+		foreach (['avi','mp4','mkv'] as $ext) {
+			$this->assertEquals('fa-file-video', Utils::getIcon($ext));
+		}
+		foreach (['js','css','php'] as $ext) {
+			$this->assertEquals('fa-file-code', Utils::getIcon($ext));
+		}
+		$this->assertEquals('fa-file-pdf', Utils::getIcon('pdf'));
+		$this->assertEquals('fa-file-text', Utils::getIcon('txt'));
+		$this->assertEquals('fa-file', Utils::getIcon('test'));
+	}
+}
