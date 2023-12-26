@@ -1,5 +1,8 @@
-<?php
+<?php declare(strict_types=1);
+
 namespace FileApi;
+
+use InvalidArgumentException;
 
 /**
  * Support class for filename extension and unit conversion

@@ -1,12 +1,13 @@
-<?php
+<?php declare(strict_types=1);
+
 namespace FileApi;
 
 /**
- * File interaction throught PHP
+ * File interaction throughout PHP
  */
 class FileApiPhp extends FileApi {
-	/** @var int */
-	static $mode = 0777;	// for directories
+	/** @var int	Linux rights for directories */
+	public static $mode = 0777;
 
 	/**
 	 * Is it possible to write into filename
@@ -159,7 +160,7 @@ class FileApiPhp extends FileApi {
 	 * @param bool $replace
 	 * @return bool
 	 */
-	public function createFile ($dir, $file, $data, $replace = false) {
+	public function createFile (string $dir, string $file, string $data, bool $replace = false): bool {
 		if ($file == '' || !$replace && $this->exist($dir, $file)) {
 			$this->error = $this->getMsg('EXIST', self::escape($file), 'FILE');
 		}
@@ -237,7 +238,7 @@ class FileApiPhp extends FileApi {
 
 	/**
 	 * Delete file
-     * @param string $dir
+	 * @param string $dir
 	 * @param string $file
 	 * @return bool
 	 */

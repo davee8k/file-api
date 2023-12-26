@@ -1,4 +1,5 @@
-<?php
+<?php declare(strict_types=1);
+
 namespace FileApi;
 
 use InvalidArgumentException;
@@ -9,16 +10,16 @@ use InvalidArgumentException;
  * !!! Do NOT use it - NOT SAFE !!!
  */
 class FileApiFtp extends FileApiPhp {
-	/** @var array<string, string|int> */
+	/** @var array{'SERVER': string, 'USER': string, 'PASS': string, 'DIR': string, 'PORT'?: int} */
 	private $ftp;
-	/** @var resource|null */
+	/** @var \FTP\Connection|null */
 	protected $connect = null;
 	/** @var string */
 	protected $pathFTP;
 
 	/**
 	 * @param string $loc
-	 * @param array<string, string> $ftp
+	 * @param array{'SERVER': string, 'USER': string, 'PASS': string, 'DIR': string, 'PORT'?: int} $ftp
 	 */
 	public function __construct (string $loc, array $ftp) {
 		$this->ftp = $ftp;
@@ -96,7 +97,7 @@ class FileApiFtp extends FileApiPhp {
 
 	/**
 	 * Initialize ftp connection
-	 * @return resource
+	 * @return \FTP\Connection
 	 * @throws InvalidArgumentException
 	 */
 	public function connection () {

@@ -1,13 +1,14 @@
-<?php
+<?php declare(strict_types=1);
+
 use FileApi\Utils;
 
 class UtilsTest extends \PHPUnit\Framework\TestCase {
 
-	public function test_basic_getMaxUpload () {
+	public function testBasicGetMaxUpload (): void {
 		$this->assertEquals(100, Utils::getMaxUpload(100));
 	}
 
-	public function test_sizeToNum () {
+	public function testSizeToNum (): void {
 		$this->assertEquals(1024, Utils::sizeToNum('1KB'));
 
 		$this->assertEquals(10485760, Utils::sizeToNum('10MB'));
@@ -17,7 +18,7 @@ class UtilsTest extends \PHPUnit\Framework\TestCase {
 		$this->assertEquals(1099511627776, Utils::sizeToNum('1 T'));
 	}
 
-	public function test_numToSize () {
+	public function testNumToSize (): void {
 		$this->assertEquals('1 KB', Utils::numToSize(1024));
 
 		$this->assertEquals('10 MB', Utils::numToSize(10485760));
@@ -27,7 +28,7 @@ class UtilsTest extends \PHPUnit\Framework\TestCase {
 		$this->assertEquals([1, 'T'], Utils::numToSize(1099511627776, true));
 	}
 
-	public function test_getExt () {
+	public function testGetExt (): void {
 		$this->assertEquals('test', Utils::getExt('test.test'));
 
 		$this->assertEquals('gif', Utils::getExt('test.dot.gif'));
@@ -35,7 +36,7 @@ class UtilsTest extends \PHPUnit\Framework\TestCase {
 		$this->assertEquals('', Utils::getExt('test'));
 	}
 
-	public function test_getIcon () {
+	public function testGetIcon (): void {
 		foreach (['gif','jpg','bmp','gif'] as $ext) {
 			$this->assertEquals('fa-file-image', Utils::getIcon($ext));
 		}

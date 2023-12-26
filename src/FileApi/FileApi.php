@@ -1,4 +1,5 @@
-<?php
+<?php declare(strict_types=1);
+
 namespace FileApi;
 
 use InvalidArgumentException,
@@ -108,7 +109,7 @@ class FileApi {
 	}
 
 	/**
-	 * Return full formated path with $dir
+	 * Return full formatted path with $dir
 	 * @param string $dir
 	 * @param bool $isDir
 	 * @return string
@@ -174,7 +175,7 @@ class FileApi {
 	public function getMime (string $url): string {
 		if (class_exists('finfo')) {
 			$info = new finfo(FILEINFO_MIME_TYPE);
-			return $info->file($this->makePath($url, false));
+			return $info->file($this->makePath($url, false)) ?: '';
 		}
 		if (is_callable('mime_content_type')) mime_content_type($this->makePath($url, false));
 		return 'application/octet-stream';
@@ -186,7 +187,7 @@ class FileApi {
 	 * @return int
 	 */
 	public function getSize (string $url): int {
-		return filesize($this->makePath($url, false));
+		return filesize($this->makePath($url, false)) ?: -1;
 	}
 
 	/**
@@ -237,7 +238,7 @@ class FileApi {
 	/**
 	 * Get list of files in directory
 	 * @param string $dir
-	 * @return array<string, array<string, string|int>>
+	 * @return array<string, array{'NAME': string, 'DATE': int, 'SIZE': int, 'MIME': string}>
 	 */
 	public function loadFiles (string $dir = ''): array {
 		$files = [];
@@ -247,8 +248,8 @@ class FileApi {
 			while (($name = readdir($dh)) !== false) {
 				if (!in_array($name, ['.','..'])) {
 					if (!is_dir($path.$name)) {
-						$files[$name] = ['NAME'=>$name, 'DATE'=>filectime($path.$name),
-							'SIZE'=>filesize($path.$name), 'MIME'=>$this->getMime($path.$name)];
+						$files[$name] = ['NAME'=>$name, 'DATE'=>filectime($path.$name) ?: 0,
+							'SIZE'=>$this->getSize($path.$name), 'MIME'=>$this->getMime($path.$name)];
 					}
 				}
 			}
@@ -338,9 +339,9 @@ class FileApi {
 	 */
 	public function getUrlData (string $url): ?string {
 		$ch = curl_init();
-		curl_setopt($ch, CURLOPT_HEADER, 0); // vypne hlavicku
+		curl_setopt($ch, CURLOPT_HEADER, 0);
 		curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (X11; U; Linux x86_64; en-US; rv:1.9.1)');
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); // vypne vypis
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 		curl_setopt($ch, CURLOPT_URL, $url);
 		$data = curl_exec($ch);
 		// check return content
@@ -350,7 +351,7 @@ class FileApi {
 			$this->error = $this->getMsg('CURL_ERROR', $returnCode);
 			return null;
 		}
-		return $data === false ? null : $data;
+		return is_bool($data) ? null : $data;
 	}
 
 	/**
