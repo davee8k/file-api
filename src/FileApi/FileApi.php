@@ -2,8 +2,8 @@
 
 namespace FileApi;
 
-use InvalidArgumentException,
-	finfo;
+use InvalidArgumentException;
+use finfo;
 
 /**
  * File APIs for browsing and interaction with files
@@ -225,8 +225,11 @@ class FileApi {
 			$preLength = strlen($path);
 			$file = mb_strtolower($file);
 
-			foreach (glob($regex, $flags) as $item) {
-				if (mb_strtolower(substr($item, $preLength)) === $file) return true;
+			$list = glob($regex, $flags);
+			if (!empty($list)) {
+				foreach ($list as $item) {
+					if (mb_strtolower(substr($item, $preLength)) === $file) return true;
+				}
 			}
 			return false;
 		}

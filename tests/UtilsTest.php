@@ -2,7 +2,9 @@
 
 use FileApi\Utils;
 
-class UtilsTest extends \PHPUnit\Framework\TestCase {
+use PHPUnit\Framework\TestCase;
+
+class UtilsTest extends TestCase {
 
 	public function testBasicGetMaxUpload (): void {
 		$this->assertEquals(100, Utils::getMaxUpload(100));
@@ -25,7 +27,17 @@ class UtilsTest extends \PHPUnit\Framework\TestCase {
 
 		$this->assertEquals('100 GB', Utils::numToSize(107374182400));
 
-		$this->assertEquals([1, 'T'], Utils::numToSize(1099511627776, true));
+		$this->assertEquals('1 TB', Utils::numToSize(1099511627776));
+	}
+
+	public function testNumToSizeArray (): void {
+		$this->assertEquals([1, 'K'], Utils::numToSizeArray(1024));
+
+		$this->assertEquals([10, 'M'], Utils::numToSizeArray(10485760));
+
+		$this->assertEquals([100, 'G'], Utils::numToSizeArray(107374182400));
+
+		$this->assertEquals([1, 'T'], Utils::numToSizeArray(1099511627776));
 	}
 
 	public function testGetExt (): void {

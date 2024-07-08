@@ -41,19 +41,26 @@ class Utils {
 		return $num;
 	}
 
+
 	/**
 	 * Convert numeric value to KB
 	 * @param int $num
-	 * @param bool $split
-	 * @return array{float,string}|string
+	 * @return string
 	 */
-	public static function numToSize (int $num, bool $split = false) {
+	public static function numToSize (int $num): string {
+		return implode(' ', self::numToSizeArray($num))."B";
+	}
+
+	/**
+	 * Convert numeric value to [size, unit]
+	 * @param int $num
+	 * @return array{float, string}
+	 */
+	public static function numToSizeArray (int $num): array {
 		$scale = ['','K','M','G','T','P'];
 		$n = 0;
 		while ($num >= 1024 && $num = round($num / 1024)) $n++;
-		if ($split) return [$num, $scale[$n]];
-		$num .= " ".$scale[$n]."B";
-		return $num;
+		return [$num, $scale[$n]];
 	}
 
 	/**
