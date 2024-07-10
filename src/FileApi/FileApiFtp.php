@@ -70,23 +70,23 @@ class FileApiFtp extends FileApiPhp {
 	/**
 	 * File upload. Error message is from isUpload
 	 * @param string $input
-	 * @param int|null $id
+	 * @param int|null $num
 	 * @param string $dir
 	 * @param string|null $file
 	 * @param bool $copy
 	 * @return bool
 	 */
-	public function upload (string $input, ?int $id, string $dir, string $file = null, bool $copy = false): bool {
-		if ($this->isUpload($input, $id)) {
-			if ($file === null) $file = $this->getUpload($input, 'name', $id);
+	public function upload (string $input, ?int $num, string $dir, string $file = null, bool $copy = false): bool {
+		if ($this->isUpload($input, $num)) {
+			if ($file === null) $file = $this->getUpload($input, 'name', $num);
 			if (!$this->isWritable($this->makePath($dir))) $this->error = $this->getMsg('NO_RIGHTS', self::escape($file));
 			else {
-				$tmpName = $this->getUpload($input, 'tmp_name', $id);
+				$tmpName = $this->getUpload($input, 'tmp_name', $num);
 				if ($copy) {
 					if ($this->fileCopy(null, $dir, $tmpName, $file)) return true;
 				}
 				else {
-					$mode = preg_match('/^text/i', $this->getUpload($input, 'type', $id)) ? FTP_ASCII : FTP_BINARY;
+					$mode = preg_match('/^text/i', $this->getUpload($input, 'type', $num)) ? FTP_ASCII : FTP_BINARY;
 					if (ftp_put($this->connection(), $this->makeFtpPath($dir).$file, $tmpName, $mode)) return true;
 				}
 				$this->error = $this->getMsg('GENERAL_ERROR', self::escape($tmpName.', '.$dir.$file));

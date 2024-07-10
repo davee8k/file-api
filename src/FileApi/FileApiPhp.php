@@ -73,20 +73,20 @@ class FileApiPhp extends FileApi {
 		$this->error = $this->getMsg('NOT_FOUND', self::escape($file ?: $dir), $file ? 'FILE' : 'DIR');
 		if ($this->exist($dir, $file)) {
 			if ($file === null) {
-				$dh = opendir($this->makePath($dir));
-				if ($dh === false) {
+				$handle = opendir($this->makePath($dir));
+				if ($handle === false) {
 					$this->error = $this->getMsg('GENERAL_ERROR', self::escape($dir), 'DIR');
 					return false;
 				}
 
-				while ($cont = readdir($dh)) {
+				while ($cont = readdir($handle)) {
 					if ($cont != '.' && $cont != '..') {
-						closedir($dh);
+						closedir($handle);
 						$this->error = $this->getMsg('NOT_EMPTY', self::escape($dir), 'DIR');
 						return false;
 					}
 				}
-				closedir($dh);
+				closedir($handle);
 				if ($this->dirDelete($dir)) return true;
 				$this->error = $this->getMsg('NOT_DELETE', self::escape($dir), 'DIR');
 			}
@@ -101,18 +101,18 @@ class FileApiPhp extends FileApi {
 	/**
 	 * File upload. Error message is from isUpload
 	 * @param string $input
-	 * @param int|null $id
+	 * @param int|null $num
 	 * @param string $dir
 	 * @param string|null $file
 	 * @param bool $copy
 	 * @return bool
 	 */
-	public function upload (string $input, ?int $id, string $dir, string $file = null, bool $copy = false): bool {
-		if ($this->isUpload($input, $id)) {
-			if ($file === null) $file = $this->getUpload($input, 'name', $id);
+	public function upload (string $input, ?int $num, string $dir, string $file = null, bool $copy = false): bool {
+		if ($this->isUpload($input, $num)) {
+			if ($file === null) $file = $this->getUpload($input, 'name', $num);
 			if (!$this->isWritable($dir)) $this->error = $this->getMsg('NO_RIGHTS', self::escape($this->path.$dir));
 			else {
-				$tmpName = $this->getUpload($input, 'tmp_name', $id);
+				$tmpName = $this->getUpload($input, 'tmp_name', $num);
 				if ($copy) {
 					if ($this->fileCopy(null, $dir, $tmpName, $file)) return true;
 				}
@@ -135,18 +135,18 @@ class FileApiPhp extends FileApi {
 		if (!is_dir($this->makePath($path))) {
 			$way = "";
 			$dirs = explode(DIRECTORY_SEPARATOR, trim($path, DIRECTORY_SEPARATOR));
-			for ($i = 0; $i < count($dirs); $i++) {
-				if (!$this->exist($this->makePath($way.$dirs[$i]))) {
+			foreach ($dirs as $dir) {
+				if (!$this->exist($this->makePath($way.$dir))) {
 					if (!$this->isWritable($way)) {
 						$this->error = $this->getMsg('NO_RIGHTS', self::escape($this->path.$way));
 						return false;
 					}
-					else if (!$this->dirMake($way.$dirs[$i])) {
-						$this->error = $this->getMsg('GENERAL_ERROR', self::escape($dirs[$i]));
+					else if (!$this->dirMake($way.$dir)) {
+						$this->error = $this->getMsg('GENERAL_ERROR', self::escape($dir));
 						return false;
 					}
 				}
-				$way .= $dirs[$i].DIRECTORY_SEPARATOR;
+				$way .= $dir.DIRECTORY_SEPARATOR;
 			}
 		}
 		return true;

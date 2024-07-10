@@ -41,7 +41,6 @@ class Utils {
 		return $num;
 	}
 
-
 	/**
 	 * Convert numeric value to KB
 	 * @param int $num
@@ -58,9 +57,9 @@ class Utils {
 	 */
 	public static function numToSizeArray (int $num): array {
 		$scale = ['','K','M','G','T','P'];
-		$n = 0;
-		while ($num >= 1024 && $num = round($num / 1024)) $n++;
-		return [$num, $scale[$n]];
+		$exp = 0;
+		while ($num >= 1024 && $num = round($num / 1024)) $exp++;
+		return [$num, $scale[$exp]];
 	}
 
 	/**

@@ -143,12 +143,12 @@ class FileApi {
 	 * Get info form $_FILES
 	 * @param string $input
 	 * @param string $type
-	 * @param int|null $id
+	 * @param int|null $num
 	 * @return mixed
 	 */
-	public function getUpload (string $input, string $type, int $id = null) {
-		if ($id === null) return $_FILES[$input][$type];
-		return $_FILES[$input][$type][$id];
+	public function getUpload (string $input, string $type, int $num = null) {
+		if ($num === null) return $_FILES[$input][$type];
+		return $_FILES[$input][$type][$num];
 	}
 
 	/**
@@ -156,14 +156,14 @@ class FileApi {
 	 * @param string $input
 	 * @param string $type
 	 * @param mixed $val
-	 * @param int|null $id
+	 * @param int|null $num
 	 */
-	public function setUpload (string $input, string $type, $val, int $id = null): void {
+	public function setUpload (string $input, string $type, $val, int $num = null): void {
 		if (!isset($_FILES[$input])) $_FILES[$input] = [];
-		if ($id === null) $_FILES[$input][$type] = $val;
+		if ($num === null) $_FILES[$input][$type] = $val;
 		else {
 			if (!isset($_FILES[$input][$type])) $_FILES[$input][$type] = [];
-			$_FILES[$input][$type][$id] = $val;
+			$_FILES[$input][$type][$num] = $val;
 		}
 	}
 
@@ -246,9 +246,9 @@ class FileApi {
 	public function loadFiles (string $dir = ''): array {
 		$files = [];
 		$path = $this->makePath($dir);
-		$dh = opendir($path);
-		if ($dh) {
-			while (($name = readdir($dh)) !== false) {
+		$handle = opendir($path);
+		if ($handle) {
+			while (($name = readdir($handle)) !== false) {
 				if (!in_array($name, ['.','..'])) {
 					if (!is_dir($path.$name)) {
 						$files[$name] = ['NAME'=>$name, 'DATE'=>filectime($path.$name) ?: 0,
@@ -256,7 +256,7 @@ class FileApi {
 					}
 				}
 			}
-			closedir($dh);
+			closedir($handle);
 		}
 		return $files;
 	}
@@ -264,12 +264,12 @@ class FileApi {
 	/**
 	 * Check if uploaded file is ok
 	 * @param string $input
-	 * @param int|null $id
+	 * @param int|null $num
 	 * @param bool $emptyIsOk
 	 * @return bool
 	 */
-	public function isUpload (string $input, ?int $id = null, bool $emptyIsOk = false): bool {
-		$errNum = $this->getUpload($input, 'error', $id);
+	public function isUpload (string $input, ?int $num = null, bool $emptyIsOk = false): bool {
+		$errNum = $this->getUpload($input, 'error', $num);
 		if ($errNum === 0) return true;
 
 		if ($errNum === 4) {
@@ -277,7 +277,7 @@ class FileApi {
 			$this->error = $this->getMsg('NO_UPLOAD');
 		}
 		else {
-			$escName = self::escape($this->getUpload($input, 'name', $id));
+			$escName = self::escape($this->getUpload($input, 'name', $num));
 			if ($errNum === 1 || $errNum == 2) $this->error = $this->getMsg('UPLOAD_MAX_SIZE', $escName);
 			else if ($errNum === 3) $this->error = $this->getMsg('UPLOAD_STOPPED', $escName);
 			else $this->error = $this->getMsg('UPLOAD_ERROR', $escName, null, $errNum);
@@ -290,18 +290,18 @@ class FileApi {
 	 * @param string $input
 	 * @param string $filePath
 	 * @param string $name
-	 * @param int|null $id
+	 * @param int|null $num
 	 * @throws InvalidArgumentException
 	 */
-	public function fakeUpload (string $input, string $filePath, string $name, int $id = null): void {
-		if ($id === null ? isset($_FILES[$input]['name']) : isset($_FILES[$input]['name'][$id])) {
+	public function fakeUpload (string $input, string $filePath, string $name, int $num = null): void {
+		if ($num === null ? isset($_FILES[$input]['name']) : isset($_FILES[$input]['name'][$num])) {
 			throw new InvalidArgumentException('File input already exists.');
 		}
-		$this->setUpload($input, 'name', $name, $id);
-		$this->setUpload($input, 'type', $this->getMime($filePath), $id);
-		$this->setUpload($input, 'tmp_name', $filePath, $id);
-		$this->setUpload($input, 'error', 0, $id);
-		$this->setUpload($input, 'size', $this->getSize($filePath), $id);
+		$this->setUpload($input, 'name', $name, $num);
+		$this->setUpload($input, 'type', $this->getMime($filePath), $num);
+		$this->setUpload($input, 'tmp_name', $filePath, $num);
+		$this->setUpload($input, 'error', 0, $num);
+		$this->setUpload($input, 'size', $this->getSize($filePath), $num);
 	}
 
 	/**
@@ -369,10 +369,10 @@ class FileApi {
 
 		$range = false;
 		if (isset($_SERVER['HTTP_RANGE'])) {
-			list($size_unit, $range_orig) = explode('=', $_SERVER['HTTP_RANGE'], 2);
-			if ($size_unit == 'bytes') {
+			list($sizeUnit, $rangeOrig) = explode('=', $_SERVER['HTTP_RANGE'], 2);
+			if ($sizeUnit == 'bytes') {
 				// only one range - http://tools.ietf.org/id/draft-ietf-http-range-retrieval-00.txt
-				list($range, $extra_ranges) = explode(',', $range_orig, 2);
+				list($range, $extraRanges) = explode(',', $rangeOrig, 2);
 				$range = explode('-', $range, 2);
 			}
 			else {
@@ -388,8 +388,8 @@ class FileApi {
 
 		// open file
 		$fileSize = filesize($this->makePath($dir).$file);
-		$fp = @fopen($this->makePath($dir).$file, 'rb');
-		if ($fp !== false) {
+		$res = @fopen($this->makePath($dir).$file, 'rb');
+		if ($res !== false) {
 			// setup headers
 			header('Pragma: public');
 			header('Expires: -1');
@@ -415,16 +415,16 @@ class FileApi {
 			else header('Content-Length: '.$fileSize);
 
 			// download file
-			fseek($fp, $seekStart);
-			while (!feof($fp)) {
-				echo @fread($fp, 1024 * 8);
+			fseek($res, $seekStart);
+			while (!feof($res)) {
+				echo @fread($res, 1024 * 8);
 				// client disconnected
 				if (connection_status() !== 0) {
-					@fclose($fp);
+					@fclose($res);
 					exit;
 				}
 			}
-			@fclose($fp);
+			@fclose($res);
 			return true;
 		}
 		return false;
