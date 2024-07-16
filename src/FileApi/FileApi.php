@@ -1,4 +1,5 @@
-<?php declare(strict_types=1);
+<?php
+declare(strict_types=1);
 
 namespace FileApi;
 
@@ -12,7 +13,8 @@ use finfo;
  * @license https://unlicense.org/
  * @version 0.87
  */
-class FileApi {
+class FileApi
+{
 	/** @var string */
 	protected $location;
 	/** @var string */
@@ -46,7 +48,8 @@ class FileApi {
 	 * @param string $quote
 	 * @return string
 	 */
-	public static function escape (string $value, string $quote = "'"): string {
+	public static function escape(string $value, string $quote = "'"): string
+	{
 		return htmlspecialchars($quote.$value.$quote, ENT_QUOTES);
 	}
 
@@ -54,10 +57,13 @@ class FileApi {
 	 * @param string $loc
 	 * @throws InvalidArgumentException
 	 */
-	public function __construct (string $loc) {
+	public function __construct(string $loc)
+	{
 		$this->location = $loc;
 		$this->path = $loc;
-		if (!$this->setPath('')) throw new InvalidArgumentException($this->getMsg('NOT_FOUND', self::escape($loc), 'DIR'));
+		if (!$this->setPath('')) {
+			throw new InvalidArgumentException($this->getMsg('NOT_FOUND', self::escape($loc), 'DIR'));
+		}
 	}
 
 	/**
@@ -65,7 +71,8 @@ class FileApi {
 	 * @param string $dir
 	 * @return string
 	 */
-	public function filterPath (string $dir): string {
+	public function filterPath(string $dir): string
+	{
 		return preg_replace('/(^|\/){1}\.\.\//', '/', $dir) ?? '';
 	}
 
@@ -73,7 +80,8 @@ class FileApi {
 	 * Return last error message
 	 * @return string
 	 */
-	public function getError (): string {
+	public function getError(): string
+	{
 		return $this->error;
 	}
 
@@ -81,7 +89,8 @@ class FileApi {
 	 * Return current path
 	 * @return string
 	 */
-	public function getPath (): string {
+	public function getPath(): string
+	{
 		return $this->path;
 	}
 
@@ -90,7 +99,8 @@ class FileApi {
 	 * @param string $dir
 	 * @return string
 	 */
-	public function cropPath (string $dir): string {
+	public function cropPath(string $dir): string
+	{
 		return preg_replace('/^'.preg_quote($this->path, '/').'/', '', $dir) ?? '';
 	}
 
@@ -100,7 +110,8 @@ class FileApi {
 	 * @param bool $isDir
 	 * @return string
 	 */
-	public function fixPath (string $dir, bool $isDir = true): string {
+	public function fixPath(string $dir, bool $isDir = true): string
+	{
 		if ($dir !== '') {
 			if (strpos($dir, './') === 0) $dir = substr($dir, 2);
 			if ($isDir && substr($dir, -1) !== DIRECTORY_SEPARATOR) $dir .= DIRECTORY_SEPARATOR;
@@ -114,7 +125,8 @@ class FileApi {
 	 * @param bool $isDir
 	 * @return string
 	 */
-	public function makePath (string $dir, bool $isDir = true): string {
+	public function makePath(string $dir, bool $isDir = true): string
+	{
 		$dir = $this->fixPath($dir, $isDir);
 		if ($dir === '') return $this->path;
 		if (strpos($dir, $this->path) === 0) return $dir;
@@ -126,7 +138,8 @@ class FileApi {
 	 * @param string $dir
 	 * @return bool
 	 */
-	public function setPath (string $dir): bool {
+	public function setPath(string $dir): bool
+	{
 		$currentPath = $this->path;
 		$this->path = $this->location;
 
@@ -146,7 +159,8 @@ class FileApi {
 	 * @param int|null $num
 	 * @return mixed
 	 */
-	public function getUpload (string $input, string $type, int $num = null) {
+	public function getUpload(string $input, string $type, int $num = null)
+	{
 		if ($num === null) return $_FILES[$input][$type];
 		return $_FILES[$input][$type][$num];
 	}
@@ -158,7 +172,8 @@ class FileApi {
 	 * @param mixed $val
 	 * @param int|null $num
 	 */
-	public function setUpload (string $input, string $type, $val, int $num = null): void {
+	public function setUpload(string $input, string $type, $val, int $num = null): void
+	{
 		if (!isset($_FILES[$input])) $_FILES[$input] = [];
 		if ($num === null) $_FILES[$input][$type] = $val;
 		else {
@@ -172,7 +187,8 @@ class FileApi {
 	 * @param string $url
 	 * @return string
 	 */
-	public function getMime (string $url): string {
+	public function getMime(string $url): string
+	{
 		if (class_exists('finfo')) {
 			$info = new finfo(FILEINFO_MIME_TYPE);
 			return $info->file($this->makePath($url, false)) ?: '';
@@ -186,7 +202,8 @@ class FileApi {
 	 * @param string $url
 	 * @return int
 	 */
-	public function getSize (string $url): int {
+	public function getSize(string $url): int
+	{
 		return filesize($this->makePath($url, false)) ?: -1;
 	}
 
@@ -197,7 +214,8 @@ class FileApi {
 	 * @param bool $caseSensitive
 	 * @return bool
 	 */
-	public function exist (string $dir, string $file = null, bool $caseSensitive = false): bool {
+	public function exist(string $dir, string $file = null, bool $caseSensitive = false): bool
+	{
 		if ($caseSensitive) {
 			if ($this->exist($dir, $file, false)) {
 				return true;
@@ -205,14 +223,13 @@ class FileApi {
 			// check directory
 			$flags = GLOB_NOSORT;
 			if ($file === null) {
-				$flags = GLOB_NOSORT|GLOB_ONLYDIR;
+				$flags = GLOB_NOSORT | GLOB_ONLYDIR;
 
 				$lastPos = strrpos($dir, DIRECTORY_SEPARATOR);
 				if ($lastPos) {
 					$file = substr($dir, $lastPos + 1);
 					$dir = substr($dir, 0, $lastPos + 1);
-				}
-				else {
+				} else {
 					$file = $dir;
 					$dir = '';
 				}
@@ -243,16 +260,17 @@ class FileApi {
 	 * @param string $dir
 	 * @return array<string, array{'NAME': string, 'DATE': int, 'SIZE': int, 'MIME': string}>
 	 */
-	public function loadFiles (string $dir = ''): array {
+	public function loadFiles(string $dir = ''): array
+	{
 		$files = [];
 		$path = $this->makePath($dir);
 		$handle = opendir($path);
 		if ($handle) {
 			while (($name = readdir($handle)) !== false) {
-				if (!in_array($name, ['.','..'])) {
+				if (!in_array($name, ['.', '..'])) {
 					if (!is_dir($path.$name)) {
-						$files[$name] = ['NAME'=>$name, 'DATE'=>filectime($path.$name) ?: 0,
-							'SIZE'=>$this->getSize($path.$name), 'MIME'=>$this->getMime($path.$name)];
+						$files[$name] = ['NAME' => $name, 'DATE' => filectime($path.$name) ?: 0,
+							'SIZE' => $this->getSize($path.$name), 'MIME' => $this->getMime($path.$name)];
 					}
 				}
 			}
@@ -268,18 +286,18 @@ class FileApi {
 	 * @param bool $emptyIsOk
 	 * @return bool
 	 */
-	public function isUpload (string $input, ?int $num = null, bool $emptyIsOk = false): bool {
+	public function isUpload(string $input, ?int $num = null, bool $emptyIsOk = false): bool
+	{
 		$errNum = $this->getUpload($input, 'error', $num);
 		if ($errNum === 0) return true;
 
 		if ($errNum === 4) {
 			if ($emptyIsOk) return true;
 			$this->error = $this->getMsg('NO_UPLOAD');
-		}
-		else {
+		} else {
 			$escName = self::escape($this->getUpload($input, 'name', $num));
 			if ($errNum === 1 || $errNum == 2) $this->error = $this->getMsg('UPLOAD_MAX_SIZE', $escName);
-			else if ($errNum === 3) $this->error = $this->getMsg('UPLOAD_STOPPED', $escName);
+			elseif ($errNum === 3) $this->error = $this->getMsg('UPLOAD_STOPPED', $escName);
 			else $this->error = $this->getMsg('UPLOAD_ERROR', $escName, null, $errNum);
 		}
 		return false;
@@ -293,7 +311,8 @@ class FileApi {
 	 * @param int|null $num
 	 * @throws InvalidArgumentException
 	 */
-	public function fakeUpload (string $input, string $filePath, string $name, int $num = null): void {
+	public function fakeUpload(string $input, string $filePath, string $name, int $num = null): void
+	{
 		if ($num === null ? isset($_FILES[$input]['name']) : isset($_FILES[$input]['name'][$num])) {
 			throw new InvalidArgumentException('File input already exists.');
 		}
@@ -312,9 +331,11 @@ class FileApi {
 	 * @param array<int,mixed>|int|null $toLevels
 	 * @return bool
 	 */
-	public function clonePost (string $fromMark, $fromLevels, string $toMark, $toLevels): bool {
-		foreach ($_FILES[$fromMark] as $mark=>$none) {
+	public function clonePost(string $fromMark, $fromLevels, string $toMark, $toLevels): bool
+	{
+		foreach ($_FILES[$fromMark] as $mark => $none) {
 			$from = $_FILES[$fromMark][$mark];
+
 			if ($fromLevels !== null) {
 				if (!is_array($fromLevels)) $fromLevels = [$fromLevels];
 				foreach ($fromLevels as $num) {
@@ -322,13 +343,19 @@ class FileApi {
 					$from = $from[$num];
 				}
 			}
-			if ($toLevels === null) $_FILES[$toMark][$mark] = $from;
-			else if (!is_array($toLevels)) $_FILES[$toMark][$mark][$toLevels] = $from;
-			else {
+
+			if ($toLevels === null) {
+				$_FILES[$toMark][$mark] = $from;
+			} elseif (!is_array($toLevels)) {
+				$_FILES[$toMark][$mark][$toLevels] = $from;
+			} else {
 				switch (count($toLevels)) {
-					case 1: $_FILES[$toMark][$mark] = $from; break;
-					case 2: $_FILES[$toMark][$mark][$toLevels[0]][$toLevels[1]] = $from; break;
-					case 3: $_FILES[$toMark][$mark][$toLevels[0]][$toLevels[1]][$toLevels[2]] = $from; break;
+					case 1: $_FILES[$toMark][$mark] = $from;
+						break;
+					case 2: $_FILES[$toMark][$mark][$toLevels[0]][$toLevels[1]] = $from;
+						break;
+					case 3: $_FILES[$toMark][$mark][$toLevels[0]][$toLevels[1]][$toLevels[2]] = $from;
+						break;
 				}
 			}
 		}
@@ -340,7 +367,8 @@ class FileApi {
 	 * @param string $url
 	 * @return string|null
 	 */
-	public function getUrlData (string $url): ?string {
+	public function getUrlData(string $url): ?string
+	{
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_HEADER, 0);
 		curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (X11; U; Linux x86_64; en-US; rv:1.9.1)');
@@ -364,7 +392,8 @@ class FileApi {
 	 * @param bool $stream
 	 * @return bool
 	 */
-	public function downloadFile (string $dir, string $file, bool $stream = false): bool {
+	public function downloadFile(string $dir, string $file, bool $stream = false): bool
+	{
 		if (!$this->exist($dir, $file)) return false;
 
 		$range = false;
@@ -374,8 +403,7 @@ class FileApi {
 				// only one range - http://tools.ietf.org/id/draft-ietf-http-range-retrieval-00.txt
 				list($range, $extraRanges) = explode(',', $rangeOrig, 2);
 				$range = explode('-', $range, 2);
-			}
-			else {
+			} else {
 				header('HTTP/1.1 416 Requested Range Not Satisfiable');
 				$this->error = $this->getMsg('CURL_ERROR', 416);
 				return false;
@@ -411,8 +439,9 @@ class FileApi {
 				header('HTTP/1.1 206 Partial Content');
 				header('Content-Range: bytes '.$seekStart.'-'.$seekEnd.'/'.$fileSize);
 				header('Content-Length: '.($seekEnd - $seekStart + 1));
+			} else {
+				header('Content-Length: '.$fileSize);
 			}
-			else header('Content-Length: '.$fileSize);
 
 			// download file
 			fseek($res, $seekStart);
@@ -438,7 +467,8 @@ class FileApi {
 	 * @param int|null $num
 	 * @return string
 	 */
-	protected function getMsg (string $msg, $param = null, string $type = null, int $num = null): string {
+	protected function getMsg(string $msg, $param = null, string $type = null, int $num = null): string
+	{
 		if (isset(static::$msgs[$msg])) {
 			return ($type ? static::$msgs[$type] : '').sprintf(static::$msgs[$msg], $param, $num);
 		}

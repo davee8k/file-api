@@ -1,4 +1,5 @@
-<?php declare(strict_types=1);
+<?php
+declare(strict_types=1);
 
 namespace FileApi;
 
@@ -7,14 +8,15 @@ use InvalidArgumentException;
 /**
  * Support class for filename extension and unit conversion
  */
-class Utils {
-
+class Utils
+{
 	/**
 	 * Get maximum upload size
 	 * @param int $custom
 	 * @return int
 	 */
-	public static function getMaxUpload (int $custom = 0): int {
+	public static function getMaxUpload(int $custom = 0): int
+	{
 		$max = min(self::sizeToNum(ini_get('upload_max_filesize') ?: '9P'), self::sizeToNum(ini_get('post_max_size') ?: '9P'));
 		return $custom !== 0 && $max > $custom ? $custom : $max;
 	}
@@ -24,11 +26,12 @@ class Utils {
 	 * @param string $val
 	 * @return int
 	 */
-	public static function sizeToNum (string $val): int {
+	public static function sizeToNum(string $val): int
+	{
 		$val = preg_split('/(?<=\d) *(?=[a-z])/i', $val);
 		if ($val === false) throw new InvalidArgumentException('Invalid file size value');
 
-		$num = (int)$val[0];
+		$num = (int) $val[0];
 		if ($val[1]) {
 			switch (strtoupper(substr($val[1], 0, 1))) {
 				case 'P': $num *= 1024;
@@ -46,7 +49,8 @@ class Utils {
 	 * @param int $num
 	 * @return string
 	 */
-	public static function numToSize (int $num): string {
+	public static function numToSize(int $num): string
+	{
 		return implode(' ', self::numToSizeArray($num))."B";
 	}
 
@@ -55,10 +59,13 @@ class Utils {
 	 * @param int $num
 	 * @return array{float, string}
 	 */
-	public static function numToSizeArray (int $num): array {
-		$scale = ['','K','M','G','T','P'];
+	public static function numToSizeArray(int $num): array
+	{
+		$scale = ['', 'K', 'M', 'G', 'T', 'P'];
 		$exp = 0;
-		while ($num >= 1024 && $num = round($num / 1024)) $exp++;
+		while ($num >= 1024 && $num = round($num / 1024)) {
+			$exp++;
+		}
 		return [$num, $scale[$exp]];
 	}
 
@@ -67,7 +74,8 @@ class Utils {
 	 * @param string $name
 	 * @return string
 	 */
-	public static function getExt (string $name): string {
+	public static function getExt(string $name): string
+	{
 		$dot = mb_strrpos($name, '.');
 		if ($dot) return mb_strtolower(mb_substr($name, $dot + 1));
 		return '';
@@ -78,7 +86,8 @@ class Utils {
 	 * @param string $ext
 	 * @return string
 	 */
-	public static function getIcon (string $ext): string {
+	public static function getIcon(string $ext): string
+	{
 		switch (strtolower($ext)) {
 			case 'pdf': return 'fa-file-pdf';
 			case 'xml':

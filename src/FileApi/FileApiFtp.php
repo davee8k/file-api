@@ -1,15 +1,18 @@
-<?php declare(strict_types=1);
+<?php
+declare(strict_types=1);
 
 namespace FileApi;
 
 use InvalidArgumentException;
+
 //	FTP\Connection;	support php8+
 
 /**
  * File interaction throughout FTP
  * !!! Do NOT use it - NOT SAFE !!!
  */
-class FileApiFtp extends FileApiPhp {
+class FileApiFtp extends FileApiPhp
+{
 	/** @var array{'SERVER': string, 'USER': string, 'PASS': string, 'DIR': string, 'PORT'?: int} */
 	private $ftp;
 	/** @var \FTP\Connection|null */
@@ -21,7 +24,8 @@ class FileApiFtp extends FileApiPhp {
 	 * @param string $loc
 	 * @param array{'SERVER': string, 'USER': string, 'PASS': string, 'DIR': string, 'PORT'?: int} $ftp
 	 */
-	public function __construct (string $loc, array $ftp) {
+	public function __construct(string $loc, array $ftp)
+	{
 		$this->ftp = $ftp;
 		$this->pathFTP = $ftp['DIR'];
 		parent::__construct($loc);
@@ -30,7 +34,8 @@ class FileApiFtp extends FileApiPhp {
 	/**
 	 * Close FTP connection
 	 */
-	public function __destruct () {
+	public function __destruct()
+	{
 		if ($this->connect) ftp_close($this->connect);
 	}
 
@@ -39,7 +44,8 @@ class FileApiFtp extends FileApiPhp {
 	 * @param string $dir
 	 * @return string
 	 */
-	function makeFtpPath (string $dir): string {
+	function makeFtpPath(string $dir): string
+	{
 		if ($dir === '') return $this->pathFTP;
 		if (strpos($dir, $this->path) === 0) $dir = $this->cropPath($dir);
 		return $this->pathFTP.(strrpos($dir, DIRECTORY_SEPARATOR) === 0 ? $dir.DIRECTORY_SEPARATOR : $dir);
@@ -50,7 +56,8 @@ class FileApiFtp extends FileApiPhp {
 	 * @param string $dir
 	 * @return bool
 	 */
-	function setPath (string $dir): bool {
+	function setPath(string $dir): bool
+	{
 		if (parent::setPath($dir)) {
 			$this->pathFTP = $this->ftp['DIR'].$dir;
 			return true;
@@ -63,7 +70,8 @@ class FileApiFtp extends FileApiPhp {
 	 * @param string $url
 	 * @return bool
 	 */
-	function isWritable (string $url): bool {
+	function isWritable(string $url): bool
+	{
 		return true;
 	}
 
@@ -76,16 +84,19 @@ class FileApiFtp extends FileApiPhp {
 	 * @param bool $copy
 	 * @return bool
 	 */
-	public function upload (string $input, ?int $num, string $dir, string $file = null, bool $copy = false): bool {
+	public function upload(string $input, ?int $num, string $dir, string $file = null, bool $copy = false): bool
+	{
 		if ($this->isUpload($input, $num)) {
 			if ($file === null) $file = $this->getUpload($input, 'name', $num);
-			if (!$this->isWritable($this->makePath($dir))) $this->error = $this->getMsg('NO_RIGHTS', self::escape($file));
+
+			if (!$this->isWritable($this->makePath($dir))) {
+				$this->error = $this->getMsg('NO_RIGHTS', self::escape($file));
+			}
 			else {
 				$tmpName = $this->getUpload($input, 'tmp_name', $num);
 				if ($copy) {
 					if ($this->fileCopy(null, $dir, $tmpName, $file)) return true;
-				}
-				else {
+				} else {
 					$mode = preg_match('/^text/i', $this->getUpload($input, 'type', $num)) ? FTP_ASCII : FTP_BINARY;
 					if (ftp_put($this->connection(), $this->makeFtpPath($dir).$file, $tmpName, $mode)) return true;
 				}
@@ -100,7 +111,8 @@ class FileApiFtp extends FileApiPhp {
 	 * @return \FTP\Connection
 	 * @throws InvalidArgumentException
 	 */
-	public function connection () {
+	public function connection()
+	{
 		if (!$this->connect) {
 			$connect = ftp_connect($this->ftp['SERVER'], $this->ftp['PORT'] ?? 21, 10);
 			if (!$connect || !@ftp_login($connect, $this->ftp['USER'], $this->ftp['PASS'])) {
@@ -117,7 +129,8 @@ class FileApiFtp extends FileApiPhp {
 	 * @param string $dir
 	 * @return bool
 	 */
-	protected function dirMake (string $dir): bool {
+	protected function dirMake(string $dir): bool
+	{
 		if (ftp_mkdir($this->connection(), $this->makeFtpPath($dir))) {
 			ftp_chmod($this->connection(), self::$mode, $this->makeFtpPath($dir));
 			return true;
@@ -130,7 +143,8 @@ class FileApiFtp extends FileApiPhp {
 	 * @param string $dir
 	 * @return bool
 	 */
-	protected function dirDelete (string $dir): bool {
+	protected function dirDelete(string $dir): bool
+	{
 		return ftp_rmdir($this->connection(), $this->makeFtpPath($dir));
 	}
 
@@ -142,7 +156,8 @@ class FileApiFtp extends FileApiPhp {
 	 * @param string $fileNew
 	 * @return bool
 	 */
-	protected function fileCopy (?string $dirOld, string  $dirNew, string $fileOld, string $fileNew): bool {
+	protected function fileCopy(?string $dirOld, string $dirNew, string $fileOld, string $fileNew): bool
+	{
 		$mode = preg_match('/^text/i', $this->getMime($dirOld === null ? $fileOld : $this->makeFtpPath($dirOld).$fileOld)) ? FTP_ASCII : FTP_BINARY;
 		return ftp_get($this->connection(), $dirOld === null ? $fileOld : $this->makeFtpPath($dirOld).$fileOld, $this->makeFtpPath($dirNew).$fileNew, $mode);
 	}
@@ -153,7 +168,8 @@ class FileApiFtp extends FileApiPhp {
 	 * @param string $file
 	 * @return bool
 	 */
-	protected function fileDelete (string $dir, string $file): bool {
+	protected function fileDelete(string $dir, string $file): bool
+	{
 		return ftp_delete($this->connection(), $this->makeFtpPath($dir).$file);
 	}
 
@@ -165,7 +181,8 @@ class FileApiFtp extends FileApiPhp {
 	 * @param string|null $fileNew
 	 * @return bool
 	 */
-	protected function uniRename (string $dirOld, string $dirNew, ?string $fileOld, ?string $fileNew): bool {
+	protected function uniRename(string $dirOld, string $dirNew, ?string $fileOld, ?string $fileNew): bool
+	{
 		return ftp_rename($this->connection(), $this->makeFtpPath($dirOld).$fileOld, $this->makeFtpPath($dirNew).$fileNew);
 	}
 }

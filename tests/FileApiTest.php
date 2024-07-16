@@ -1,51 +1,55 @@
-<?php declare(strict_types=1);
+<?php
+declare(strict_types=1);
 
 use FileApi\FileApi;
 use FileApi\FileApiPhp;
 use FileApi\FileApiFtp;
-
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Test are build for Linux filesystems (some test checking access rights)
  */
-class FileApiTest extends TestCase {
-
+class FileApiTest extends TestCase
+{
 	private const DIR_SRC = 'source/';
 	private const DIR_UPLOAD = 'upload/';
 
-	/*private static $ftp = [
-		'SERVER' => '127.0.0.1',
-		'USER' => 'user',
-		'PASS' => 'password',
-		'DIR' => DIR_TEST_TARGET
-	];*/
+//	private static $ftp = [
+//	  'SERVER' => '127.0.0.1',
+//	  'USER' => 'user',
+//	  'PASS' => 'password',
+//	  'DIR' => DIR_TEST_TARGET
+//	];
 
 	/**
 	 * @return array<string, FileApi[]>
 	 */
-	public static function apiBase (): array {
-		return ['Base' => [ new FileApi(DIR_TEST_TARGET) ]];
+	public static function apiBase(): array
+	{
+		return ['Base' => [new FileApi(DIR_TEST_TARGET)]];
 	}
 
 	/**
 	 * @return array<string, FileApi[]>
 	 */
-	public static function apiPhp (): array {
-		return ['Php' => [ new FileApiPhp(DIR_TEST_TARGET) ]];
+	public static function apiPhp(): array
+	{
+		return ['Php' => [new FileApiPhp(DIR_TEST_TARGET)]];
 	}
 
 	/**
 	 * Fake FTP to be possible test it without ftp access
 	 * @return array<string, FileApi[]>
 	 */
-	public static function apiFtp (): array {
-		if (!empty(self::$ftp)) return ['Ftp' => [ new FileApiFtp(DIR_TEST_TARGET, self::$ftp) ]];
+	public static function apiFtp(): array
+	{
+		if (!empty(self::$ftp)) return ['Ftp' => [new FileApiFtp(DIR_TEST_TARGET, self::$ftp)]];
 		return [];
 	}
 
-	public function testValidateInitPath (): void {
+	public function testValidateInitPath(): void
+	{
 		new FileApi(DIR_TEST_TARGET);
 		$this->expectException('InvalidArgumentException');
 		$this->expectExceptionMessage('Directory &#039;/fail/&#039; not found.');
@@ -55,7 +59,8 @@ class FileApiTest extends TestCase {
 	#[DataProvider('apiBase')]
 	#[DataProvider('apiPhp')]
 	#[DataProvider('apiFtp')]
-	public function testGetUrlData (FileApi $api): void {
+	public function testGetUrlData(FileApi $api): void
+	{
 		$this->assertEquals('User-agent: *
 Disallow:
 Sitemap: /sitemap.xml', $api->getUrlData('http://localhost/0_BaseAdmin/robots.txt'));
@@ -67,7 +72,8 @@ Sitemap: /sitemap.xml', $api->getUrlData('http://localhost/0_BaseAdmin/robots.tx
 	#[DataProvider('apiBase')]
 	#[DataProvider('apiPhp')]
 	#[DataProvider('apiFtp')]
-	public function testSetPath (FileApi $api): void {
+	public function testSetPath(FileApi $api): void
+	{
 		$this->assertTrue($api->setPath('upload'));
 		$this->assertEquals(DIR_TEST_TARGET.self::DIR_UPLOAD, $api->getPath());
 		$this->assertTrue($api->setPath(self::DIR_UPLOAD));
@@ -79,7 +85,8 @@ Sitemap: /sitemap.xml', $api->getUrlData('http://localhost/0_BaseAdmin/robots.tx
 	#[DataProvider('apiBase')]
 	#[DataProvider('apiPhp')]
 	#[DataProvider('apiFtp')]
-	public function testFilterPath (FileApi $api): void {
+	public function testFilterPath(FileApi $api): void
+	{
 		$this->assertEquals('test/test/', $api->filterPath('test/../test/'));
 		$this->assertEquals('/test/test/', $api->filterPath('../test/test/'));
 		$this->assertEquals('test/test/', $api->filterPath('test/test/../'));
@@ -90,7 +97,8 @@ Sitemap: /sitemap.xml', $api->getUrlData('http://localhost/0_BaseAdmin/robots.tx
 	#[DataProvider('apiBase')]
 	#[DataProvider('apiPhp')]
 	#[DataProvider('apiFtp')]
-	public function testMakePath (FileApi $api): void {
+	public function testMakePath(FileApi $api): void
+	{
 		$this->assertEquals(DIR_TEST_TARGET, $api->makePath(''));
 		$this->assertEquals(DIR_TEST_TARGET.'tester/', $api->makePath('./tester'));
 		$this->assertEquals(DIR_TEST_TARGET.'tester/', $api->makePath('tester'));
@@ -101,20 +109,23 @@ Sitemap: /sitemap.xml', $api->getUrlData('http://localhost/0_BaseAdmin/robots.tx
 	#[DataProvider('apiBase')]
 	#[DataProvider('apiPhp')]
 	#[DataProvider('apiFtp')]
-	public function testFileSize (FileApi $api): void {
+	public function testFileSize(FileApi $api): void
+	{
 		$this->assertEquals(79, $api->getSize(self::DIR_UPLOAD.'fail/test.gif'));
 	}
 
 	#[DataProvider('apiBase')]
 	#[DataProvider('apiPhp')]
 	#[DataProvider('apiFtp')]
-	public function testMime (FileApi $api): void {
+	public function testMime(FileApi $api): void
+	{
 		$this->assertEquals('image/gif', $api->getMime(self::DIR_UPLOAD.'fail/test.gif'));
 	}
 
 	#[DataProvider('apiPhp')]
 	#[DataProvider('apiFtp')]
-	public function testDirAction (FileApiPhp $api): void {
+	public function testDirAction(FileApiPhp $api): void
+	{
 		$this->assertTrue($api->createDir('tester'));
 		$this->assertTrue($api->delete('tester'));
 
@@ -126,7 +137,8 @@ Sitemap: /sitemap.xml', $api->getUrlData('http://localhost/0_BaseAdmin/robots.tx
 	#[DataProvider('apiBase')]
 	#[DataProvider('apiPhp')]
 	#[DataProvider('apiFtp')]
-	public function testLoadFiles (FileApi $api): void {
+	public function testLoadFiles(FileApi $api): void
+	{
 		$this->assertEmpty($api->loadFiles(self::DIR_SRC.'empty/'));
 
 		$this->assertEquals(1, count($api->loadFiles('upload/fail/')));
@@ -135,14 +147,15 @@ Sitemap: /sitemap.xml', $api->getUrlData('http://localhost/0_BaseAdmin/robots.tx
 	#[DataProvider('apiBase')]
 	#[DataProvider('apiPhp')]
 	#[DataProvider('apiFtp')]
-	public function testIsUploadOk (FileApi $api): void {
+	public function testIsUploadOk(FileApi $api): void
+	{
 		$_FILES = [
 			'test' => [
-				'name' => [ 0 => 'test.gif' ],
-				'type' => [ 0 => 'image/gif' ],
-				'size' => [ 0 => 79 ],
-				'tmp_name' => [ 0 => DIR_TEST_TARGET.self::DIR_SRC.'test.gif' ],
-				'error' => [ 0 => 0 ]
+				'name' => [0 => 'test.gif'],
+				'type' => [0 => 'image/gif'],
+				'size' => [0 => 79],
+				'tmp_name' => [0 => DIR_TEST_TARGET.self::DIR_SRC.'test.gif'],
+				'error' => [0 => 0]
 			]
 		];
 
@@ -173,7 +186,8 @@ Sitemap: /sitemap.xml', $api->getUrlData('http://localhost/0_BaseAdmin/robots.tx
 	#[DataProvider('apiBase')]
 	#[DataProvider('apiPhp')]
 	#[DataProvider('apiFtp')]
-	public function testUploadClone (FileApi $api): void {
+	public function testUploadClone(FileApi $api): void
+	{
 		$_FILES['from'] = [
 			'name' => 'test.gif',
 			'type' => 'image/gif',
@@ -187,11 +201,11 @@ Sitemap: /sitemap.xml', $api->getUrlData('http://localhost/0_BaseAdmin/robots.tx
 		unset($_FILES);
 
 		$_FILES['subfrom'] = [
-			'name' => [ 0 => 'test.gif' ],
-			'type' => [ 0 => 'image/gif' ],
-			'size' => [ 0 => 79 ],
-			'tmp_name' => [ 0 => DIR_TEST_TARGET.self::DIR_SRC.'test.gif' ],
-			'error' => [ 0 => 0 ]
+			'name' => [0 => 'test.gif'],
+			'type' => [0 => 'image/gif'],
+			'size' => [0 => 79],
+			'tmp_name' => [0 => DIR_TEST_TARGET.self::DIR_SRC.'test.gif'],
+			'error' => [0 => 0]
 		];
 
 		$this->assertTrue($api->clonePost('subfrom', 0, 'subto', 0));
@@ -199,19 +213,19 @@ Sitemap: /sitemap.xml', $api->getUrlData('http://localhost/0_BaseAdmin/robots.tx
 		unset($_FILES);
 
 		$_FILES['subfrom'] = [
-			'name' => [ 0 => 'test.gif' ],
-			'type' => [ 0 => 'image/gif' ],
-			'size' => [ 0 => 79 ],
-			'tmp_name' => [ 0 => DIR_TEST_TARGET.self::DIR_SRC.'test.gif' ],
-			'error' => [ 0 => 0 ]
+			'name' => [0 => 'test.gif'],
+			'type' => [0 => 'image/gif'],
+			'size' => [0 => 79],
+			'tmp_name' => [0 => DIR_TEST_TARGET.self::DIR_SRC.'test.gif'],
+			'error' => [0 => 0]
 		];
 
 		$outData = [
-			'name' => [ 1 => [ 0 => 'test.gif' ] ],
-			'type' => [ 1 => [ 0 => 'image/gif' ] ],
-			'size' => [ 1 => [ 0 => 79 ] ],
-			'tmp_name' => [ 1 => [ 0 => DIR_TEST_TARGET.self::DIR_SRC.'test.gif' ] ],
-			'error' => [ 1 => [ 0 => 0 ] ]
+			'name' => [1 => [0 => 'test.gif']],
+			'type' => [1 => [0 => 'image/gif']],
+			'size' => [1 => [0 => 79]],
+			'tmp_name' => [1 => [0 => DIR_TEST_TARGET.self::DIR_SRC.'test.gif']],
+			'error' => [1 => [0 => 0]]
 		];
 
 		$this->assertTrue($api->clonePost('subfrom', 0, 'subto', [1, 0]));
@@ -219,7 +233,8 @@ Sitemap: /sitemap.xml', $api->getUrlData('http://localhost/0_BaseAdmin/robots.tx
 	}
 
 	#[DataProvider('apiBase')]
-	public function testFakeUpload (FileApi $api): void {
+	public function testFakeUpload(FileApi $api): void
+	{
 		$expect = [
 			'name' => 'test.gif',
 			'type' => 'image/gif',
@@ -240,7 +255,8 @@ Sitemap: /sitemap.xml', $api->getUrlData('http://localhost/0_BaseAdmin/robots.tx
 
 	#[DataProvider('apiPhp')]
 	#[DataProvider('apiFtp')]
-	public function testCreateFile (FileApiPhp $api): void {
+	public function testCreateFile(FileApiPhp $api): void
+	{
 		$this->assertFalse($api->createFile('upload/fail/', 'test.gif', 'test'));
 		$this->assertEquals("File &#039;test.gif&#039; already exists.", $api->getError());
 
@@ -256,17 +272,19 @@ Sitemap: /sitemap.xml', $api->getUrlData('http://localhost/0_BaseAdmin/robots.tx
 
 	#[DataProvider('apiPhp')]
 	#[DataProvider('apiFtp')]
-	public function testDeleteFail (FileApiPhp $api): void {
+	public function testDeleteFail(FileApiPhp $api): void
+	{
 		$this->assertFalse($api->delete('upload/fail/'));
 		$this->assertEquals($api->getError(), 'Directory &#039;upload/fail/&#039; is not empty.');
 
-		$this->assertFalse($api->delete('upload/fail/','test.gif'));
+		$this->assertFalse($api->delete('upload/fail/', 'test.gif'));
 		$this->assertEquals($api->getError(), 'File &#039;test.gif&#039; cannot be deleted.');
 	}
 
 	#[DataProvider('apiPhp')]
 	#[DataProvider('apiFtp')]
-	public function testRename (FileApiPhp $api): void {
+	public function testRename(FileApiPhp $api): void
+	{
 		$this->assertTrue($api->createDir('test'));
 		$this->assertTrue($api->move('test', 'testb'));
 		$this->assertFalse($api->exist('test'));
@@ -283,7 +301,8 @@ Sitemap: /sitemap.xml', $api->getUrlData('http://localhost/0_BaseAdmin/robots.tx
 
 	#[DataProvider('apiPhp')]
 	#[DataProvider('apiFtp')]
-	public function testRenameFail (FileApiPhp $api): void {
+	public function testRenameFail(FileApiPhp $api): void
+	{
 		$this->assertFalse($api->rename('test', 'test', ''));
 		$this->assertEquals($api->getError(), 'No new name was entered.');
 
@@ -296,7 +315,8 @@ Sitemap: /sitemap.xml', $api->getUrlData('http://localhost/0_BaseAdmin/robots.tx
 
 	#[DataProvider('apiPhp')]
 	#[DataProvider('apiFtp')]
-	public function testMove (FileApiPhp $api): void {
+	public function testMove(FileApiPhp $api): void
+	{
 		$this->assertTrue($api->createDir('test'));
 		$this->assertTrue($api->move('test', 'testb'));
 		$this->assertFalse($api->exist('test'));
@@ -314,7 +334,8 @@ Sitemap: /sitemap.xml', $api->getUrlData('http://localhost/0_BaseAdmin/robots.tx
 
 	#[DataProvider('apiPhp')]
 	#[DataProvider('apiFtp')]
-	public function testMoveFails (FileApiPhp $api): void {
+	public function testMoveFails(FileApiPhp $api): void
+	{
 		$this->assertFalse($api->move('', self::DIR_UPLOAD, 'failto'));
 		$this->assertEquals($api->getError(), 'File &#039;failto&#039; not found.');
 
@@ -327,7 +348,8 @@ Sitemap: /sitemap.xml', $api->getUrlData('http://localhost/0_BaseAdmin/robots.tx
 
 	#[DataProvider('apiPhp')]
 	#[DataProvider('apiFtp')]
-	public function testCopy (FileApiPhp $api): void {
+	public function testCopy(FileApiPhp $api): void
+	{
 		$this->assertTrue($api->createDir('test'));
 		$this->assertTrue($api->copy('test', 'testb'));
 		$this->assertTrue($api->exist('test'));
@@ -349,7 +371,8 @@ Sitemap: /sitemap.xml', $api->getUrlData('http://localhost/0_BaseAdmin/robots.tx
 
 	#[DataProvider('apiPhp')]
 	#[DataProvider('apiFtp')]
-	public function testCopyFail (FileApiPhp $api): void {
+	public function testCopyFail(FileApiPhp $api): void
+	{
 		$this->assertFalse($api->copy('', self::DIR_UPLOAD, 'failto'));
 		$this->assertEquals($api->getError(), 'File &#039;failto&#039; not found.');
 
@@ -366,7 +389,8 @@ Sitemap: /sitemap.xml', $api->getUrlData('http://localhost/0_BaseAdmin/robots.tx
 	#[DataProvider('apiBase')]
 	#[DataProvider('apiPhp')]
 	#[DataProvider('apiFtp')]
-	public function testExistCaseInsensitive (FileApi $api): void {
+	public function testExistCaseInsensitive(FileApi $api): void
+	{
 		// dir
 		$api->setPath(self::DIR_SRC);
 		$this->assertFalse($api->exist('CASE', null, false));
@@ -388,13 +412,14 @@ Sitemap: /sitemap.xml', $api->getUrlData('http://localhost/0_BaseAdmin/robots.tx
 
 	#[DataProvider('apiPhp')]
 	#[DataProvider('apiFtp')]
-	public function testUpload (FileApiPhp $api): void {
+	public function testUpload(FileApiPhp $api): void
+	{
 		$_FILES['from'] = [
-			'name' => [ 0 => 'mask_01.gif' ],
-			'type' => [ 0 => 'image/gif' ],
-			'size' => [ 0 => 79 ],
-			'tmp_name' => [ 0 => DIR_TEST_TARGET.self::DIR_SRC.'test.gif' ],
-			'error' => [ 0 => 3 ]
+			'name' => [0 => 'mask_01.gif'],
+			'type' => [0 => 'image/gif'],
+			'size' => [0 => 79],
+			'tmp_name' => [0 => DIR_TEST_TARGET.self::DIR_SRC.'test.gif'],
+			'error' => [0 => 3]
 		];
 
 		$this->assertFalse($api->upload('from', 0, self::DIR_UPLOAD));
@@ -410,13 +435,14 @@ Sitemap: /sitemap.xml', $api->getUrlData('http://localhost/0_BaseAdmin/robots.tx
 		$this->assertEquals($api->getError(), 'General error: &#039;/fail/none.gif, upload/target.gif&#039;');
 	}
 
-	public function testFtpFail (): void {
+	public function testFtpFail(): void
+	{
 		if (!empty($this->ftp)) {
 			$api = new FileApiFtp(DIR_TEST_TARGET, $this->ftp);
 			unset($api);
 		}
 
-		$api = new FileApiFtp(DIR_TEST_TARGET, ['SERVER' => '127.0.0.1', 'USER' => 'failed_user', 'PASS' => 'no', 'DIR'=>'/']);
+		$api = new FileApiFtp(DIR_TEST_TARGET, ['SERVER' => '127.0.0.1', 'USER' => 'failed_user', 'PASS' => 'no', 'DIR' => '/']);
 		$this->expectException('InvalidArgumentException');
 		$this->expectExceptionMessage('FTP login failed.');
 		$api->connection();
@@ -425,7 +451,8 @@ Sitemap: /sitemap.xml', $api->getUrlData('http://localhost/0_BaseAdmin/robots.tx
 	#[DataProvider('apiBase')]
 	#[DataProvider('apiPhp')]
 	#[DataProvider('apiFtp')]
-	public function testDownload (FileApi $api): void {
+	public function testDownload(FileApi $api): void
+	{
 		$this->assertFalse($api->downloadFile('error', 'error'));
 	}
 }

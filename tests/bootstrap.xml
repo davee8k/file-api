@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.0/phpunit.xsd"
-		bootstrap="bootstrap.php" colors="false">
+		 xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.0/phpunit.xsd"
+		 bootstrap="bootstrap.php" colors="false">
 	<php>
 		<server name="SERVER_NAME" value="UNIT_test" />
 	</php>
-    <source>
-        <include>
-            <directory>../src</directory>
-        </include>
-    </source>
+	<source>
+		<include>
+			<directory>../src</directory>
+		</include>
+	</source>
 </phpunit>
